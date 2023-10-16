@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import validator from "validator";
 import RegisterModel from "../model/model.js";
+import bcrypt from 'bcryptjs'
 
 export const createUser = async (userData) => {
     const {name, email, picture, status, password} = userData;
@@ -41,12 +42,32 @@ export const createUser = async (userData) => {
 
     // add or save new user info to database
     const user = await new RegisterModel({
-        name,
+        name,   // or name: name
         email,
         picture: picture || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrYEJXPjyNl8XHhIattM2ScXdr2CiIc0bQqDi4AEDYNg&s",
         status: status || "Connect me through ConnectMe!",
         password
     }).save();
+
+    return user;
+}
+
+
+export const loginUser = async (email, password) => {
+    const user = await RegisterModel.findOne({email: email.toLowerCase()}).lean();
+
+
+    // check if user exist or not
+    if (!user ) {
+        throw createHttpError.NotFound("Invalid credentials")
+    }
+
+    // compare user password and password from database 
+    const comparePassword = await bcrypt.compare(password, user.password)
+
+    if (!comparePassword) {
+        throw createHttpError.NotFound("Please enter a valid password!")
+    }
 
     return user;
 }
