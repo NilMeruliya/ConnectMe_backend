@@ -7,7 +7,7 @@ const registerSchema = mongoose.Schema({
         type: String,
         required: [
             true, "please enter your name!"
-        ]
+        ],
     },
     email: {
         type: String,

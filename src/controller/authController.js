@@ -42,7 +42,6 @@ export const register = async (req, res, next) => {
 
         res.json({
             messsage: "registered successfully", 
-            accessToken, 
             user: {
                 _id: newUser._id,
                 name: newUser.name,
@@ -50,6 +49,7 @@ export const register = async (req, res, next) => {
                 picture: newUser.picture,
                 status: newUser.status,
                 password: newUser.password,
+                token: accessToken
             } 
         });
         console.log(req.body); 
@@ -87,7 +87,6 @@ export const login = async (req, res, next) => {
 
         res.json({
             messsage: "registered successfully", 
-            accessToken, 
             user: {
                 _id: user._id,
                 name: user.name,
@@ -95,6 +94,7 @@ export const login = async (req, res, next) => {
                 picture: user.picture,
                 status: user.status,
                 password: user.password,
+                token: accessToken, 
             } 
         });
     } catch (error) {
@@ -121,6 +121,28 @@ export const tokenRefresh = async (req, res, next) => {
         if (!token_refresh) {
             throw createHttpError.Unauthorized('please log in.')
         }
+
+        const check = await verifyToken(
+            token_refresh,
+            process.env.REFRESH_SECRET_KEY
+          );
+          const user = await findUser(check.userId);
+          const token_access = await generateToken(
+            { userId: user._id },
+            "1d",
+            process.env.TOKEN_SECRET_KEY
+          );
+          res.json({
+            user: {
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              picture: user.picture,
+              status: user.status,
+              password: user.password,
+              token: token_access,
+            },
+          });
     } catch (error) {
         res.status(500);
         next(error)
