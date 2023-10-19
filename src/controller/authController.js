@@ -5,6 +5,8 @@ import { generateToken } from "../service/tokenService.js";
 export const register = async (req, res, next) => {
     try {
         const {name, email, picture, status, password} = req.body;
+
+        console.log(req.body);
         const newUser = await createUser({
             name, email, picture, status, password
         })
@@ -32,13 +34,13 @@ export const register = async (req, res, next) => {
             "30d",
             process.env.REFRESH_SECRET_KEY);
 
-        res.cookie('refreshToken', refreshToken, {
+        res.cookie('tokenRefresh', refreshToken, {
             httpOnly: true,
-            path: '/api/v1/auth/refreshToken',
+            path: '/api/v1/auth/tokenRefresh',
             maxAge: 30*24*60*60*1000 // for 30 days
         })
 
-        console.log({accessToken, refreshToken});
+        // console.log({accessToken, tokenRefresh});
 
         res.json({
             messsage: "registered successfully", 
@@ -48,13 +50,15 @@ export const register = async (req, res, next) => {
                 email: newUser.email,
                 picture: newUser.picture,
                 status: newUser.status,
-                password: newUser.password,
-                token: accessToken
+                // password: newUser.password,
+                // token: accessToken,
+                accessToken
             } 
         });
-        console.log(req.body); 
+        
     } catch (error) {
-        res.status(500);
+        
+        res.status(500).send(error)
         next(error)
     }
 } 
@@ -77,13 +81,13 @@ export const login = async (req, res, next) => {
             "30d",
             process.env.REFRESH_SECRET_KEY);
 
-        res.cookie('refreshToken', refreshToken, {
+        res.cookie('tokenRefresh', refreshToken, {
             httpOnly: true,
-            path: '/api/v1/auth/refreshToken',
+            path: '/api/v1/auth/tokenRefresh',
             maxAge: 30*24*60*60*1000 // for 30 days
         })
 
-        console.log({accessToken, refreshToken});
+        // console.log({accessToken, tokenRefresh});
 
         res.json({
             messsage: "registered successfully", 
@@ -93,8 +97,9 @@ export const login = async (req, res, next) => {
                 email: user.email,
                 picture: user.picture,
                 status: user.status,
-                password: user.password,
-                token: accessToken, 
+                // password: user.password,
+                // token: accessToken,
+                accessToken 
             } 
         });
     } catch (error) {
@@ -105,7 +110,7 @@ export const login = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
     try {
-        res.clearCookie('refreshToken', {path: '/api/v1/auth/refreshToken'})
+        res.clearCookie('tokenRefresh', {path: '/api/v1/auth/tokenRefresh'})
         res.json({
             message: "logged out successfully!", 
         });
@@ -117,7 +122,7 @@ export const logout = async (req, res, next) => {
 
 export const tokenRefresh = async (req, res, next) => {
     try {
-        const token_refresh = req.cookies.refreshToken;
+        const token_refresh = req.cookies.tokenRefresh;
         if (!token_refresh) {
             throw createHttpError.Unauthorized('please log in.')
         }
@@ -127,11 +132,11 @@ export const tokenRefresh = async (req, res, next) => {
             process.env.REFRESH_SECRET_KEY
           );
           const user = await findUser(check.userId);
-          const token_access = await generateToken(
+          // create a new token
+         const accessToken = await generateToken(
             { userId: user._id },
             "1d",
-            process.env.TOKEN_SECRET_KEY
-          );
+            process.env.TOKEN_SECRET_KEY);
           res.json({
             user: {
               _id: user._id,
@@ -139,8 +144,9 @@ export const tokenRefresh = async (req, res, next) => {
               email: user.email,
               picture: user.picture,
               status: user.status,
-              password: user.password,
-              token: token_access,
+            //   password: user.password,
+              // token: accessToken,
+              accessToken
             },
           });
     } catch (error) {

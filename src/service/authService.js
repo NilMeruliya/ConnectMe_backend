@@ -6,6 +6,9 @@ import bcrypt from 'bcryptjs'
 export const createUser = async (userData) => {
     const {name, email, picture, status, password} = userData;
 
+    console.log("check user data here");
+    console.log(userData);
+
     // check if required fields are empty or not
     if (!name || !email || !password) {
         throw createHttpError.BadRequest('please fill out all the information')
@@ -35,7 +38,11 @@ export const createUser = async (userData) => {
     const checkUser = await RegisterModel.findOne({email});
 
     if (checkUser) {
-        throw createHttpError.Conflict('email is already exist.')
+        throw createHttpError.Conflict('Email id already exists!')
+        // throw new Error('email is already exist.')
+        // res.status(400).send({
+        //     message: 'Email id already exist'
+        //  });
     }
 
     // password hashing would be in the user model
