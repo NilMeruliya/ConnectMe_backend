@@ -54,8 +54,8 @@ export const register = async (req, res, next) => {
                     picture: newUser.picture,
                     status: newUser.status,
                     // password: newUser.password,
-                    // token: accessToken,
-                    accessToken
+                    token: accessToken,
+                  
                 } 
             });
         }
@@ -103,7 +103,7 @@ export const login = async (req, res, next) => {
                 email: user.email,
                 picture: user.picture,
                 status: user.status,
-                accessToken 
+                token: accessToken,
             } 
         });
     } catch (error) {
@@ -149,8 +149,7 @@ export const tokenRefresh = async (req, res, next) => {
               picture: user.picture,
               status: user.status,
             //   password: user.password,
-              // token: accessToken,
-              accessToken
+              token: accessToken,
             },
           });
     } catch (error) {

@@ -44,6 +44,7 @@ export const createOpenChat = async (req, res, next) => {
         let receiverUser = await findUser(receiverId);
         let chatData = {
             name: receiverUser.name,
+            picture: receiverUser.picture,
             isGroup: false,
             users: [senderId, receiverId]
         }
