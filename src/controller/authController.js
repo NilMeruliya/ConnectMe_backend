@@ -1,15 +1,18 @@
 import createHttpError from "http-errors";
 import { createUser, loginUser } from "../service/authService.js";
-import { generateToken } from "../service/tokenService.js";
+import { generateToken, verifyToken } from "../service/tokenService.js";
+import { findUser } from "../service/userService.js";
 
 export const register = async (req, res, next) => {
     try {
         const {name, email, picture, status, password} = req.body;
-
-        console.log(req.body);
+        console.log("before")
         const newUser = await createUser({
             name, email, picture, status, password
         })
+
+        console.log("chec new user");
+        console.log(newUser)
 
         // or 
 
@@ -23,43 +26,46 @@ export const register = async (req, res, next) => {
 
 
         // create a new token
-        const accessToken = await generateToken(
-            { userId: newUser._id },
-            "1d",
-            process.env.TOKEN_SECRET_KEY);
-
-        // create a new token
-        const refreshToken = await generateToken(
-            { userId: newUser._id },
-            "30d",
-            process.env.REFRESH_SECRET_KEY);
-
-        res.cookie('tokenRefresh', refreshToken, {
-            httpOnly: true,
-            path: '/api/v1/auth/tokenRefresh',
-            maxAge: 30*24*60*60*1000 // for 30 days
-        })
-
-        // console.log({accessToken, tokenRefresh});
-
-        res.json({
-            messsage: "registered successfully", 
-            user: {
-                _id: newUser._id,
-                name: newUser.name,
-                email: newUser.email,
-                picture: newUser.picture,
-                status: newUser.status,
-                // password: newUser.password,
-                // token: accessToken,
-                accessToken
-            } 
-        });
+        if(newUser) {
+            const accessToken = await generateToken(
+                { userId: newUser._id },
+                "1d",
+                process.env.TOKEN_SECRET_KEY);
+    
+            // create a new token
+            const refreshToken = await generateToken(
+                { userId: newUser._id },
+                "30d",
+                process.env.REFRESH_SECRET_KEY);
+    
+            res.cookie('tokenRefresh', refreshToken, {
+                httpOnly: true,
+                path: '/api/v1/auth/tokenRefresh',
+                maxAge: 30*24*60*60*1000 // for 30 days
+            })
+    
+            // console.log({accessToken, tokenRefresh});
+            res.json({
+                messsage: "registered successfully", 
+                user: {
+                    _id: newUser._id,
+                    name: newUser.name,
+                    email: newUser.email,
+                    picture: newUser.picture,
+                    status: newUser.status,
+                    // password: newUser.password,
+                    // token: accessToken,
+                    accessToken
+                } 
+            });
+        }
         
     } catch (error) {
-        
-        res.status(500).send(error)
-        next(error)
+        console.log("check error here");
+        console.log(error);
+        res.status(500).send({
+            error: error.message
+        })
     }
 } 
 
@@ -90,20 +96,18 @@ export const login = async (req, res, next) => {
         // console.log({accessToken, tokenRefresh});
 
         res.json({
-            messsage: "registered successfully", 
+            messsage: "logged in  successfully", 
             user: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 picture: user.picture,
                 status: user.status,
-                // password: user.password,
-                // token: accessToken,
                 accessToken 
             } 
         });
     } catch (error) {
-        res.status(500);
+        res.status(500).send(error)
         next(error)
     }
 } 
@@ -127,11 +131,11 @@ export const tokenRefresh = async (req, res, next) => {
             throw createHttpError.Unauthorized('please log in.')
         }
 
-        const check = await verifyToken(
+        const verifiedToken = await verifyToken(
             token_refresh,
             process.env.REFRESH_SECRET_KEY
           );
-          const user = await findUser(check.userId);
+          const user = await findUser(verifiedToken.userId);
           // create a new token
          const accessToken = await generateToken(
             { userId: user._id },
