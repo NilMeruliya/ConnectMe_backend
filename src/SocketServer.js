@@ -43,6 +43,17 @@ export default function(socket, io) {
           socket.in(user._id).emit("receive message", message);
         });
       });
+
+  //typing
+  socket.on("typing", (chat) => {
+    socket.in(chat).emit("typing", chat);
+    console.log("typing...", chat);
+  });
+  socket.on("stop typing", (chat) => {
+    socket.in(chat).emit("stop typing");
+    console.log("stop typing...", chat);
+  });
+
 }
 
 
