@@ -13,7 +13,8 @@ export const findUsersService = async (keyword, userId) => {
       { name: { $regex: keyword, $options: "i" } },
       { email: { $regex: keyword, $options: "i" } },
     ],
-  }).find({
+  })
+  .find({
     _id: { $ne: userId },
   });
   return users;
