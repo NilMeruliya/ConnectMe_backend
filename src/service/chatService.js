@@ -2,7 +2,8 @@ import createHttpError from "http-errors";
 import ChatModel from "../model/chatModel.js"
 import RegisterModel from "../model/model.js"
 
-export const isChatExist = async (senderId, receiverId) => {
+export const isChatExist = async (senderId, receiverId, isGroup) => {
+ if (isGroup === false) {
   let chats = await ChatModel.find({
     isGroup: false,
     $and: [
@@ -24,6 +25,26 @@ chats = await RegisterModel.populate(chats, {
    })
 
    return chats[0]; // find() method returns an array of object, findOne() method returns only single object
+
+ }  else {
+  //it's a group chat
+  let chat = await ChatModel.findById(isGroup)
+    .populate("users admin", "-password")
+    .populate("latestMessage");
+
+  if (!chat)
+    // throw createHttpError.BadRequest("Oops...Something went wrong !");
+  console.log("Oops...Something went wrong !");
+
+  //populate message model
+  chat = await RegisterModel.populate(chat, {
+    path: "latestMessage.sender",
+    select: "name email picture status",
+  });
+
+  return chat;
+}
+ 
 }
 
 
